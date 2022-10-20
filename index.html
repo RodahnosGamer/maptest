@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapinha</title>
+    <link rel="stylesheet" href="style.css" >
+    <style>
+      .controlesgerais{
+        position: fixed;
+        top: 30px;
+        left: 5%;
+        z-index: 2000;
+        background-color: #181818cc;
+        color: white;
+        padding: 5px;
+        width: 200px;
+        height: 200px;
+        font-size: 0.8em;
+        border-radius: 10px;
+      }
+      .botaocontrolesvisiveisstyle{
+        position: fixed;
+        top: 35px;
+        z-index: 2000;
+        font-size: 0.7em;
+
+      }
+      .botaocontrolesinvisiveisstyle{
+        position: fixed;
+        top: 35px;
+        z-index: 2000;
+        font-size: 0.7em;
+        left: 5.2%  ;
+      }
+      .scalezero{
+        transform: scale(0);
+      }
+      .scaleum{
+        transform: scale(1);
+      }
+        body { margin: 0; }
+    </style>
+
+</head>
+<body>
+    <div id="controlesgerais" class="scalezero">
+    <div class="controlesgerais"> 
+      
+      <button id="botaocontrolesvisiveis" class="botaocontrolesvisiveisstyle">⨉</button>
+      <h1 style="text-align: center; font-size: 1.6em;"> --Controles Gerais--</h1>
+      <p> BDM / W-A-S-D: Movimentar </p>
+      <p> BEM: Girar</p>
+      <p> Scroll / BMM: Zoom </p>
+      <p> Barra de Espaço: Resetar Camera</p>
+    
+    </div>
+    </div>
+    <button id="botaocontrolesinvisiveis" class="botaocontrolesinvisiveisstyle " >√</button>
+    <button id="liberarcamerazinha" class="positionfixedbutton"> Liberar Camera </button>
+    <button id="resetarcamera" class="positionfixedbutton" style="top: 90px;">Resetar Camera</button>
+
+    <script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+    <script type="importmap">
+        {
+        "imports": {
+         "three": "https://unpkg.com/three@0.139.0/build/three.module.js"
+        }
+        }
+    </script>
+  <script>
+    //Comandos sem start
+    document.getElementById("botaocontrolesinvisiveis").addEventListener("click", showcameraoption);
+    document.getElementById("botaocontrolesvisiveis").addEventListener("click", hidecameraoption);
+    
+
+    function showcameraoption(){
+      var butaoligado = document.getElementById("botaocontrolesinvisiveis");
+      var listinhacomandos = document.getElementById("controlesgerais");
+      butaoligado.classList.add("scalezero");
+      butaoligado.classList.remove("scaleum");
+
+      listinhacomandos.classList.remove("scalezero");
+      listinhacomandos.classList.add("scaleum");
+
+    }
+    function hidecameraoption(){
+      var butaoligado = document.getElementById("botaocontrolesinvisiveis");
+      var listinhacomandos = document.getElementById("controlesgerais");
+
+      butaoligado.classList.add("scaleum");
+      butaoligado.classList.remove("scalezero");  
+      listinhacomandos.classList.remove("scaleum");
+      listinhacomandos.classList.add("scalezero");
+     
+
+    }
+
+
+
+  </script>
+
+
+  <script type="module"> 
+    import * as THREE from 'three';
+    import { OrbitControls } from 'https://unpkg.com/three@0.139.0/examples/jsm/controls/OrbitControls.js';
+    import { GLTFLoader } from 'https://unpkg.com/three@0.139.0/examples/jsm/loaders/GLTFLoader.js';
+   
+
+
+    const scene = new THREE.Scene();
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    document.body.appendChild( renderer.domElement );
+
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    
+    scene.background = new THREE.Color(0x00000);
+    scene.fog = new THREE.Fog( 0x000000, 2 , 10000)
+
+    const loader = new GLTFLoader();
+    const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize( window.innerWidth, window.innerHeight );
+    }
+
+
+    const controls = new OrbitControls( camera, renderer.domElement );
+    controls.enabled = true ;
+
+
+    controls.minDistance = 30;
+    controls.keys = {
+	    LEFT: 'KeyA', //left arrow
+	    UP: 'KeyW', // up arrow
+	    RIGHT: 'KeyD', // right arrow
+    	BOTTOM: 'KeyS' , // down arrow      
+    }
+    controls.maxAzimuthAngle   = Math.PI / 3;
+    
+
+    //Controles so podem ser modificados se estiverem sendo "procurados"
+
+    controls.listenToKeyEvents(window);
+    
+    // Pan === Movimentar para os lados
+    controls.enablePan = true;
+    // PanSpeed == Mouse, Key == Tecla, ambos nao se interferem
+    controls.screenSpacePanning = false;
+    controls.panSpeed = 3;
+    controls.keyPanSpeed = 12;
+    controls.rotateSpeed = 0 ;
+
+    //rotacao 
+    controls.maxPolarAngle = Math.PI / 3 ;
+    //Suavizacao
+    controls.enableDamping  = true ;
+    controls.dampingFactor = 0.05;
+
+    window.addEventListener('keypress', e=>{
+      if(e.code === "Space"){
+        resetarcamera();
+      }
+    })
+    //backup dos controles
+    controls.update()
+
+
+
+  
+    document.getElementById("liberarcamerazinha").addEventListener("click", liberarcamera);
+    document.getElementById("resetarcamera").addEventListener("click", resetarcamera);
+
+
+
+
+    function resetarcamera(){
+      camera.position.set( 0, 1140,0 );
+      controls.reset() ;
+      controls.enabled = false;
+      controls.update();
+    }
+    function liberarcamera(){
+      controls.enabled = true;
+      controls.rotateSpeed = 1;
+      controls.update();
+
+    }
+
+
+    camera.position.set( 0, 1140, 0 );
+    camera.zoom;
+    controls.saveState();
+
+
+    const light = new THREE.AmbientLight( 0xffffff, 1 ); // soft white light
+    scene.add( light );
+
+    
+
+
+    const geometry = new THREE.BoxGeometry();
+    const material = new THREE.MeshStandardMaterial( { color: 0xffffff } );
+    const cube = new THREE.Mesh( geometry, material );
+    cube.receiveShadow = false;
+    cube.castShadow = true;
+    
+
+    scene.add( cube );
+
+
+    const planegeo = new THREE.PlaneGeometry(300, 300);
+    const planematerial = new THREE.MeshStandardMaterial( {color: 0x2859F4, side: THREE.DoubleSide});
+    const firstplane = new THREE.Mesh(planegeo, planematerial);
+    scene.add( firstplane );
+
+    firstplane.position.set( 0, -10, 0 );
+    firstplane.rotation.x = 1.57079632679;
+    firstplane.scale.set(50, 50 , 12 );
+    firstplane.receiveShadow = true;
+    firstplane.castShadow = false;
+
+    loader.load(
+	'untitled7.gltf',
+
+    function ( gltf) {
+      scene.add( gltf.scene );
+
+      const chuvinhagira2 = gltf.scene;
+      chuvinhagira2.position.x= 10;
+
+
+      function animation2(){
+        requestAnimationFrame( animation2 );
+        const chuvinhagira = gltf.scene;
+        chuvinhagira.rotation.y += 0.01;
+      }
+      animation2()
+      gltf.receiveShadow = false;
+      gltf.castShadow = true;
+
+
+	    }
+      
+    );
+    loader.load(
+	'mapao.gltf',
+
+    function ( gltf) {
+      scene.add( gltf.scene );
+      
+      const mapao = gltf.scene;
+      mapao.position.x= 180 ;
+      mapao.position.z= 10;
+      
+
+      function animation3(){
+        requestAnimationFrame( animation3 );
+        const mapao = gltf.scene;
+        mapao.rotation.y += 0.00;
+        mapao.scale.set(20,20,20);
+      }
+      animation3()
+      gltf.receiveShadow = true;
+      gltf.castShadow = false;
+	    }
+      
+    );
+
+
+
+
+
+    loader.load(
+	'untitled7.gltf',
+
+    function ( gltf) {
+      scene.add( gltf.scene );
+     
+      const object3dPP2 = gltf.scene;
+
+      object3dPP2.position.x = -10;
+      object3dPP2.scale.set(2,2,2);
+
+      
+      
+      function animation2(){
+        requestAnimationFrame( animation2 );
+        const object3dPP = gltf.scene;
+        object3dPP.rotation.y += 0.05;
+        object3dPP.rotation.x += 0.05;
+        object3dPP.rotation.z += 0.05;
+      }
+      animation2()
+	    }
+
+    );
+
+
+
+
+function animate() {
+  requestAnimationFrame( animate );
+
+  cube.rotation.x += 0.01;
+  cube.rotation.y += 0.01;
+  cube.rotation.z += 0.01;
+  
+
+  renderer.render( scene, camera );
+  controls.update()
+};
+
+
+animate();
+
+    
+  </script>
+</body>
+</html>
